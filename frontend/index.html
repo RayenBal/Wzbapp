@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        header { text-align: center; margin-bottom: 20px; }
+        select, button { padding: 8px; margin-right: 10px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #333; color: #fff; }
+        #feature-importance, #residuals, #predictions { display: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Model Dashboard</h1>
+        <select id="model-select">
+            <option value="xgboost">XGBoost</option>
+            <option value="randomforest">Random Forest</option>
+            <option value="bilstm">BiLSTM</option>
+            <option value="transformer">Transformer</option>
+        </select>
+        <button onclick="loadMetrics()">Load Metrics</button>
+        <button onclick="toggleSection('feature-importance')">Feature Importance</button>
+        <button onclick="toggleSection('residuals')">Residuals</button>
+        <button onclick="toggleSection('predictions')">Predictions</button>
+    </header>
+
+    <div id="metrics"></div>
+    <div id="feature-importance"></div>
+    <div id="residuals"></div>
+    <div id="predictions"></div>
+
+<script>
+async function fetchData(endpoint, model) {
+    const response = await fetch(`http://localhost:8000/${endpoint}/${model}`);
+    return response.json();
+}
+
+function createTable(data) {
+    if (!data.length) return '<p>No data available</p>';
+    const headers = Object.keys(data[0]);
+    let html = '<table><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+    data.forEach(row => {
+        html += '<tr>' + headers.map(h => `<td>${row[h]}</td>`).join('') + '</tr>';
+    });
+    html += '</table>';
+    return html;
+}
+
+async function loadMetrics() {
+    const model = document.getElementById('model-select').value;
+    const metrics = await fetchData('metrics', model);
+    document.getElementById('metrics').innerHTML = createTable(metrics);
+    document.getElementById('feature-importance').style.display = 'none';
+    document.getElementById('residuals').style.display = 'none';
+    document.getElementById('predictions').style.display = 'none';
+}
+
+async function toggleSection(section) {
+    const model = document.getElementById('model-select').value;
+    const container = document.getElementById(section);
+    if (container.style.display === 'block') {
+        container.style.display = 'none';
+        return;
+    }
+    let data;
+    if (section === 'feature-importance') {
+        data = await fetchData('feature-importance', model);
+        if (data && typeof data === 'object') {
+            const entries = Object.entries(data).map(([key, val]) => ({ feature: key, importance: val }));
+            container.innerHTML = createTable(entries);
+        }
+    } else if (section === 'residuals') {
+        data = await fetchData('residuals', model);
+        container.innerHTML = createTable(data);
+    } else if (section === 'predictions') {
+        data = await fetchData('predictions', model);
+        container.innerHTML = createTable(data);
+    }
+    container.style.display = 'block';
+}
+</script>
+</body>
+</html>
