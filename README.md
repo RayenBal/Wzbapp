@@ -12,4 +12,5 @@ uvicorn backend.app.main:app --reload
 
 ## Viewing the frontend
 
-Open `frontend/index.html` in your browser. It allows selecting a model and fetching metrics, feature importance, residuals and predictions dynamically from the backend.
+Open `frontend/index.html` in your browser. The page uses Bootstrap and Chart.js to render metrics tables and interactive charts for feature importance, residuals and predictions.
+Select a model from the dropdown and press **Load Data** to visualise the results.
